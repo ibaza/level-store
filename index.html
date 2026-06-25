@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LEVEL — носки нового уровня</title>
+  <meta name="description" content="LEVEL — носки из честного хлопка. Наборы, принты, термо. Не сваливаются, не красят ноги. Wildberries, доставка по РФ." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { ink:'#050505', panel:'#0c0c0c', card:'#101011', red:'#e60023', red2:'#ff4d6a', fog:'#7a7a7a' },
+        fontFamily: { display:['Anton','system-ui','sans-serif'], sans:['Inter','system-ui','sans-serif'], mono:['"Space Mono"','ui-monospace','monospace'] },
+      } },
+    };
+  </script>
+
+  <style>
+    html, body { background:#050505; }
+    .grid-bg::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+      background-size:64px 64px; mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 80%); }
+    .grain::after { content:""; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.04; mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    #scene { position:fixed; inset:0; z-index:0; pointer-events:none; }
+    .spotlight { position:fixed; top:0; left:0; width:700px; height:700px; z-index:2; pointer-events:none; transform:translate(-50%,-50%);
+      background:radial-gradient(circle,rgba(230,0,35,.14) 0%,transparent 60%); opacity:0; transition:opacity .4s; }
+    .reveal { opacity:0; transform:translateY(34px); filter:blur(6px); transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1),filter .9s; }
+    .reveal.in { opacity:1; transform:none; filter:none; }
+    @keyframes marquee { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+    .marquee { animation:marquee 30s linear infinite; }
+    .prod img { transition:transform .6s cubic-bezier(.16,1,.3,1); }
+    .prod:hover img { transform:scale(1.08); }
+    .prod .veil { transition:opacity .4s; }
+    .prod:hover .veil { opacity:1; }
+    details > summary { list-style:none; cursor:pointer; }
+    details > summary::-webkit-details-marker { display:none; }
+    details[open] .faq-x { transform:rotate(45deg); }
+    @keyframes floaty { 0%,100%{transform:translateY(0);} 50%{transform:translateY(10px);} }
+    .scrollhint { animation:floaty 2s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity:1!important; transform:none!important; filter:none!important; }
+      .marquee, .scrollhint { animation:none; } html { scroll-behavior:auto; } .spotlight { display:none; }
+    }
+    @media (max-width:768px) { .spotlight { display:none; } }
+  </style>
+</head>
+
+<body class="grid-bg grain font-sans text-white antialiased selection:bg-red selection:text-white overflow-x-hidden">
+
+  <canvas id="scene"></canvas>
+  <div class="spotlight" id="spot"></div>
+  <div class="fixed top-0 left-0 right-0 z-[60] h-0.5 bg-white/5"><div id="bar" class="h-full w-0 bg-gradient-to-r from-red to-red2"></div></div>
+
+  <!-- HUD -->
+  <div class="pointer-events-none fixed inset-0 z-40 hidden md:block">
+    <div class="absolute bottom-5 left-6 font-mono text-[10px] uppercase tracking-widest text-fog">EST. MMXXIV · РФ</div>
+    <div class="absolute bottom-5 right-6 font-mono text-[10px] uppercase tracking-widest text-fog">[ socks.system / v2.0 ]</div>
+  </div>
+
+  <!-- NAV -->
+  <header class="fixed top-0 left-0 right-0 z-50">
+    <nav class="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
+      <a href="#top" class="flex items-center gap-2.5" aria-label="LEVEL">
+        <span class="grid h-8 w-8 place-items-center rounded bg-red text-white font-display text-lg leading-none">L</span>
+        <span class="font-display text-xl tracking-widest">LEVEL</span>
+      </a>
+      <ul class="hidden md:flex items-center gap-10 font-mono text-xs uppercase tracking-widest text-fog">
+        <li><a href="#collection" class="hover:text-white transition-colors duration-300">01 / Носки</a></li>
+        <li><a href="#why" class="hover:text-white transition-colors duration-300">02 / Манифест</a></li>
+        <li><a href="#voices" class="hover:text-white transition-colors duration-300">03 / Отзывы</a></li>
+        <li><a href="#faq" class="hover:text-white transition-colors duration-300">04 / FAQ</a></li>
+      </ul>
+      <a href="https://www.wildberries.ru/seller/250103708" target="_blank" rel="noopener" class="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-mono text-xs uppercase tracking-widest text-white hover:border-red hover:bg-red/10 transition-all duration-300">
+        <span class="h-1.5 w-1.5 rounded-full bg-red2 animate-pulse"></span> Магазин WB
+      </a>
+    </nav>
+  </header>
+
+  <!-- HERO (WebGL за контентом) -->
+  <section id="top" class="relative flex min-h-screen items-end overflow-hidden pb-20 md:pb-28">
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink via-ink/70 to-transparent z-[2]"></div>
+
+    <div class="relative z-10 mx-auto w-full max-w-[1400px] px-6">
+      <div class="reveal flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-red2">
+        <span class="h-px w-10 bg-red2"></span> Носки с характером · Wildberries
+      </div>
+
+      <h1 class="reveal mt-6 font-display text-[22vw] leading-[0.8] sm:text-[12rem] lg:text-[15rem] uppercase tracking-tighter">
+        LEVEL
+      </h1>
+      <p class="reveal -mt-2 font-display text-3xl sm:text-5xl uppercase tracking-tight text-fog">
+        носки нового <span class="text-red2">уровня</span>
+      </p>
+
+      <p class="reveal mt-7 max-w-md text-base leading-relaxed text-fog">
+        Честный хлопок, который не сваливается и не красит ноги. Наборы, принты, термо —
+        базовая вещь, доведённая до уровня.
+      </p>
+
+      <div class="reveal mt-9 flex flex-col sm:flex-row gap-4">
+        <a href="https://www.wildberries.ru/seller/250103708" target="_blank" rel="noopener" class="group inline-flex items-center justify-center gap-3 rounded-full bg-white px-8 py-4 font-mono text-xs uppercase tracking-widest text-ink hover:bg-red hover:text-white transition-all duration-300">
+          Перейти в магазин
+          <svg class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#collection" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-8 py-4 font-mono text-xs uppercase tracking-widest text-white hover:border-white/40 transition-all duration-300">Смотреть носки</a>
+      </div>
+
+      <div class="reveal mt-12 flex gap-10 border-t border-white/10 pt-6 font-mono">
+        <div><div class="text-3xl font-display">50K+</div><div class="mt-1 text-[10px] uppercase tracking-widest text-fog">заказов WB</div></div>
+        <div><div class="text-3xl font-display">4.8★</div><div class="mt-1 text-[10px] uppercase tracking-widest text-fog">рейтинг</div></div>
+        <div><div class="text-3xl font-display">80%+</div><div class="mt-1 text-[10px] uppercase tracking-widest text-fog">хлопок</div></div>
+      </div>
+    </div>
+
+    <div class="scrollhint pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 font-mono text-[10px] uppercase tracking-widest text-fog hidden md:block">↓ scroll</div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="relative z-10 border-y border-white/10 bg-panel/60 py-3 overflow-hidden backdrop-blur">
+    <div class="marquee flex w-max items-center gap-6 whitespace-nowrap font-mono text-sm uppercase tracking-[0.25em] text-white/50">
+      <span>Носки</span><span class="text-red">/</span><span>Наборы</span><span class="text-red">/</span><span>Принты</span><span class="text-red">/</span><span>Термо</span><span class="text-red">/</span><span>Честный хлопок</span><span class="text-red">/</span><span>Доставка по РФ</span><span class="text-red">/</span>
+      <span>Носки</span><span class="text-red">/</span><span>Наборы</span><span class="text-red">/</span><span>Принты</span><span class="text-red">/</span><span>Термо</span><span class="text-red">/</span><span>Честный хлопок</span><span class="text-red">/</span><span>Доставка по РФ</span><span class="text-red">/</span>
+    </div>
+  </div>
+
+  <!-- 01 / КОЛЛЕКЦИЯ -->
+  <section id="collection" class="relative z-10 mx-auto max-w-[1400px] px-6 py-24 md:py-32">
+    <div class="reveal mb-14 flex flex-wrap items-end justify-between gap-6">
+      <div>
+        <div class="mb-5 font-mono text-xs uppercase tracking-[0.3em] text-fog">01 / Носки</div>
+        <h2 class="font-display text-5xl md:text-7xl uppercase leading-none">Коллекция</h2>
+      </div>
+      <p class="max-w-xs font-mono text-xs uppercase leading-relaxed tracking-wider text-fog">Топ-позиции витрины. Тык по карточке → товар на Wildberries.</p>
+    </div>
+
+    <div class="reveal grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <a href="https://www.wildberries.ru/catalog/888555982/detail.aspx" target="_blank" rel="noopener" class="prod group relative block overflow-hidden rounded-2xl border border-white/10 bg-card">
+        <div class="relative aspect-[4/5] overflow-hidden">
+          <img src="img/888555982.webp" alt="Следки спортивные LEVEL, набор 5 пар" class="h-full w-full object-cover" loading="lazy" />
+          <div class="veil absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent opacity-60"></div>
+          <div class="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-widest text-white/80">[ 001 ]</div>
+          <div class="veil absolute bottom-4 right-4 font-mono text-[10px] uppercase tracking-widest text-white opacity-0">смотреть →</div>
+        </div>
+        <div class="flex items-center justify-between p-5">
+          <div><h3 class="font-display text-lg uppercase leading-tight">Следки спортивные</h3><p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-fog">набор 5 пар · хлопок</p></div>
+          <span class="font-display text-xl text-red2">590₽</span>
+        </div>
+      </a>
+
+      <a href="https://www.wildberries.ru/catalog/811865355/detail.aspx" target="_blank" rel="noopener" class="prod group relative block overflow-hidden rounded-2xl border border-white/10 bg-card">
+        <div class="relative aspect-[4/5] overflow-hidden">
+          <img src="img/811865355.webp" alt="Термоноски Альфа LEVEL, 3 пары" class="h-full w-full object-cover" loading="lazy" />
+          <div class="veil absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent opacity-60"></div>
+          <div class="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-widest text-white/80">[ 002 ]</div>
+          <div class="absolute right-4 top-4 rounded-full bg-red px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-white">термо</div>
+          <div class="veil absolute bottom-4 right-4 font-mono text-[10px] uppercase tracking-widest text-white opacity-0">смотреть →</div>
+        </div>
+        <div class="flex items-center justify-between p-5">
+          <div><h3 class="font-display text-lg uppercase leading-tight">Термоноски «Альфа»</h3><p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-fog">3 пары · на холод</p></div>
+          <span class="font-display text-xl text-red2">790₽</span>
+        </div>
+      </a>
+
+      <a href="https://www.wildberries.ru/catalog/904942396/detail.aspx" target="_blank" rel="noopener" class="prod group relative block overflow-hidden rounded-2xl border border-white/10 bg-card">
+        <div class="relative aspect-[4/5] overflow-hidden">
+          <img src="img/904942396.webp" alt="Носки LEVEL с принтом сердечко, набор 5 пар" class="h-full w-full object-cover" loading="lazy" />
+          <div class="veil absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent opacity-60"></div>
+          <div class="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-widest text-white/80">[ 003 ]</div>
+          <div class="absolute right-4 top-4 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-white">принт</div>
+          <div class="veil absolute bottom-4 right-4 font-mono text-[10px] uppercase tracking-widest text-white opacity-0">смотреть →</div>
+        </div>
+        <div class="flex items-center justify-between p-5">
+          <div><h3 class="font-display text-lg uppercase leading-tight">Носки «Сердечки»</h3><p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-fog">набор 5 пар · цветные</p></div>
+          <span class="font-display text-xl text-red2">490₽</span>
+        </div>
+      </a>
+    </div>
+
+    <a href="https://www.wildberries.ru/seller/250103708" target="_blank" rel="noopener" class="reveal mt-8 flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 py-6 font-mono text-xs uppercase tracking-widest text-fog hover:border-red hover:text-white transition-all duration-300">
+      Вся витрина на Wildberries
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+    </a>
+  </section>
+
+  <!-- 02 / МАНИФЕСТ -->
+  <section id="why" class="relative z-10 mx-auto max-w-[1400px] px-6 py-24 md:py-32">
+    <div class="reveal mb-14 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.3em] text-fog"><span>02 / Манифест</span><span class="h-px flex-1 bg-white/10"></span></div>
+    <h2 class="reveal max-w-4xl font-display text-5xl md:text-7xl lg:text-8xl uppercase leading-[0.95]">Базовая вещь.<br/><span class="text-fog">Сделанная</span> <span class="text-red2">как надо.</span></h2>
+
+    <div class="reveal mt-16 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-3">
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">01</div><h3 class="mt-6 font-display text-2xl uppercase">Честный хлопок 80%+</h3><p class="mt-3 text-sm leading-relaxed text-fog">Дышащая вязка, усиленные мысок и пятка. Держит десятки стирок без катышков.</p></div>
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">02</div><h3 class="mt-6 font-display text-2xl uppercase">Не сползают</h3><p class="mt-3 text-sm leading-relaxed text-fog">Мягкая резинка держит, но не пережимает. В ботинке остаются на месте.</p></div>
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">03</div><h3 class="mt-6 font-display text-2xl uppercase">Наборы выгоднее</h3><p class="mt-3 text-sm leading-relaxed text-fog">Неделя носков в одной коробке. Цена за пару ниже, чем поштучно.</p></div>
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">04</div><h3 class="mt-6 font-display text-2xl uppercase">Принты и термо</h3><p class="mt-3 text-sm leading-relaxed text-fog">Горошек, сердечки, неон, база — и термоноски на холод. Под любой сезон.</p></div>
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">05</div><h3 class="mt-6 font-display text-2xl uppercase">Доставка по РФ</h3><p class="mt-3 text-sm leading-relaxed text-fog">Любой ПВЗ Wildberries рядом с домом. Быстро и привычно.</p></div>
+      <div class="bg-ink p-8 hover:bg-card transition-colors duration-300"><div class="font-mono text-xs text-red2">06</div><h3 class="mt-6 font-display text-2xl uppercase">Вернём, если что</h3><p class="mt-3 text-sm leading-relaxed text-fog">Не зашло — возврат на WB штатно, без нервотрёпки.</p></div>
+    </div>
+  </section>
+
+  <!-- 03 / ОТЗЫВЫ -->
+  <section id="voices" class="relative z-10 mx-auto max-w-[1400px] px-6 py-24 md:py-32">
+    <div class="reveal mb-14 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.3em] text-fog"><span>03 / Отзывы</span><span class="h-px flex-1 bg-white/10"></span><span>WB · 4.8★</span></div>
+    <div class="reveal grid grid-cols-1 gap-6 md:grid-cols-3">
+      <figure class="rounded-2xl border border-white/10 bg-card p-8"><div class="font-mono text-sm tracking-widest text-red2">★★★★★</div><blockquote class="mt-5 text-lg leading-relaxed text-white/90">«Не сваливаются и пятка не протёрлась за два месяца. Беру третий набор.»</blockquote><figcaption class="mt-6 font-mono text-[11px] uppercase tracking-wider text-fog">Андрей К. · проверенный отзыв</figcaption></figure>
+      <figure class="rounded-2xl border border-white/10 bg-card p-8"><div class="font-mono text-sm tracking-widest text-red2">★★★★★</div><blockquote class="mt-5 text-lg leading-relaxed text-white/90">«Сердечки — огонь, заказала себе и подругам. Цвет не полинял после стирки.»</blockquote><figcaption class="mt-6 font-mono text-[11px] uppercase tracking-wider text-fog">Марина В. · проверенный отзыв</figcaption></figure>
+      <figure class="rounded-2xl border border-white/10 bg-card p-8"><div class="font-mono text-sm tracking-widest text-red2">★★★★<span class="text-fog">★</span></div><blockquote class="mt-5 text-lg leading-relaxed text-white/90">«Термоноски реально греют, брал на зиму. Размер сел чётко, заказываю ещё.»</blockquote><figcaption class="mt-6 font-mono text-[11px] uppercase tracking-wider text-fog">Дмитрий П. · проверенный отзыв</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 04 / FAQ -->
+  <section id="faq" class="relative z-10 mx-auto max-w-3xl px-6 py-24 md:py-32">
+    <div class="reveal mb-14 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.3em] text-fog"><span>04 / FAQ</span><span class="h-px flex-1 bg-white/10"></span></div>
+    <div class="reveal space-y-3">
+      <details class="group border-b border-white/10 py-5"><summary class="flex items-center justify-between text-lg font-medium">Где забирать заказ?<span class="faq-x font-mono text-2xl text-red2 transition-transform duration-300">+</span></summary><p class="mt-4 leading-relaxed text-fog">Всё через Wildberries — любой удобный ПВЗ рядом. Кнопки ведут на витрину и карточки товаров на WB.</p></details>
+      <details class="group border-b border-white/10 py-5"><summary class="flex items-center justify-between text-lg font-medium">Из чего носки и не сваливаются?<span class="faq-x font-mono text-2xl text-red2 transition-transform duration-300">+</span></summary><p class="mt-4 leading-relaxed text-fog">Хлопок 80%+ с эластаном для посадки. Усиленные мысок и пятка, мягкая резинка.</p></details>
+      <details class="group border-b border-white/10 py-5"><summary class="flex items-center justify-between text-lg font-medium">Какие размеры есть?<span class="faq-x font-mono text-2xl text-red2 transition-transform duration-300">+</span></summary><p class="mt-4 leading-relaxed text-fog">Основные 36–41 и 41–47. Точная сетка — в карточке каждого товара на WB.</p></details>
+      <details class="group border-b border-white/10 py-5"><summary class="flex items-center justify-between text-lg font-medium">Можно вернуть, если не подойдёт?<span class="faq-x font-mono text-2xl text-red2 transition-transform duration-300">+</span></summary><p class="mt-4 leading-relaxed text-fog">Да, возврат через Wildberries в установленные сроки. Без нервотрёпки.</p></details>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="relative z-10 px-6 pb-28">
+    <div class="reveal relative mx-auto max-w-[1400px] overflow-hidden rounded-3xl border border-white/10 bg-panel px-8 py-20 md:py-28 text-center">
+      <div class="pointer-events-none absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-red/25 blur-[120px]"></div>
+      <div class="relative font-mono text-xs uppercase tracking-[0.3em] text-red2">[ secure access · wildberries ]</div>
+      <h2 class="relative mt-7 font-display text-5xl md:text-8xl uppercase leading-[0.9]">Подними<br/>свой уровень</h2>
+      <p class="relative mx-auto mt-6 max-w-md text-fog">Носки и наборы LEVEL — на витрине Wildberries. Доставка по всей стране.</p>
+      <a href="https://www.wildberries.ru/seller/250103708" target="_blank" rel="noopener" class="group relative mt-10 inline-flex items-center gap-3 rounded-full bg-white px-10 py-4 font-mono text-xs uppercase tracking-widest text-ink hover:bg-red hover:text-white transition-all duration-300">
+        Открыть магазин
+        <svg class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="relative z-10 border-t border-white/10">
+    <div class="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row">
+      <div class="flex items-center gap-2.5"><span class="grid h-7 w-7 place-items-center rounded bg-red text-white font-display leading-none">L</span><span class="font-display text-lg tracking-widest">LEVEL</span></div>
+      <p class="font-mono text-[11px] uppercase tracking-widest text-fog">© 2026 LEVEL · носки нового уровня</p>
+      <div class="flex items-center gap-4">
+        <a href="https://www.wildberries.ru/seller/250103708" target="_blank" rel="noopener" aria-label="Wildberries" class="font-mono text-[11px] uppercase tracking-widest text-fog hover:text-red2 transition-colors duration-300">WB →</a>
+        <a href="#" aria-label="Pinterest" class="text-fog hover:opacity-80 transition-opacity"><svg class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor"><path d="M0 128.002c0 52.414 31.518 97.442 76.619 117.239c-.36-8.938-.064-19.668 2.228-29.393c2.461-10.391 16.47-69.748 16.47-69.748s-4.089-8.173-4.089-20.252c0-18.969 10.994-33.136 24.686-33.136c11.643 0 17.268 8.745 17.268 19.217c0 11.704-7.465 29.211-11.304 45.426c-3.207 13.578 6.808 24.653 20.203 24.653c24.252 0 40.586-31.149 40.586-68.055c0-28.054-18.895-49.052-53.262-49.052c-38.828 0-63.017 28.956-63.017 61.3c0 11.152 3.288 19.016 8.438 25.106c2.368 2.797 2.697 3.922 1.84 7.134c-.614 2.355-2.024 8.025-2.608 10.272c-.852 3.242-3.479 4.401-6.409 3.204c-17.884-7.301-26.213-26.886-26.213-48.902c0-36.361 30.666-79.961 91.482-79.961c48.87 0 81.035 35.364 81.035 73.325c0 50.213-27.916 87.726-69.066 87.726c-13.819 0-26.818-7.47-31.271-15.955c0 0-7.431 29.492-9.005 35.187c-2.714 9.869-8.026 19.733-12.883 27.421a127.897 127.897 0 0 0 36.277 5.249c70.684 0 127.996-57.309 127.996-128.005C256.001 57.309 198.689 0 128.005 0C57.314 0 0 57.309 0 128.002"/></svg></a>
+        <a href="#" aria-label="Telegram" class="text-fog hover:opacity-80 transition-opacity"><svg class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor"><path d="M128 0C94.06 0 61.48 13.494 37.5 37.49A128.038 128.038 0 0 0 0 128c0 33.934 13.5 66.514 37.5 90.51C61.48 242.506 94.06 256 128 256s66.52-13.494 90.5-37.49c24-23.996 37.5-56.576 37.5-90.51 0-33.934-13.5-66.514-37.5-90.51C194.52 13.494 161.94 0 128 0Zm-70.06 126.648c37.32-16.256 62.2-26.974 74.64-32.152c35.56-14.786 42.94-17.354 47.76-17.441c1.06-.017 3.42.245 4.96 1.49c1.28 1.05 1.64 2.47 1.82 3.467c.16.996.38 3.266.2 5.038c-1.92 20.24-10.26 69.356-14.5 92.026c-1.78 9.592-5.32 12.808-8.74 13.122c-7.44.684-13.08-4.912-20.28-9.63c-11.26-7.386-17.62-11.982-28.56-19.188c-12.64-8.328-4.44-12.906 2.76-20.386c1.88-1.958 34.64-31.748 35.26-34.45c.08-.338.16-1.598-.6-2.262c-.74-.666-1.84-.438-2.64-.258c-1.14.256-19.12 12.152-54 35.686c-5.1 3.508-9.72 5.218-13.88 5.128c-4.56-.098-13.36-2.584-19.9-4.708c-8-2.606-14.38-3.984-13.82-8.41c.28-2.304 3.46-4.662 9.52-7.072Z"/></svg></a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== WebGL 3D hero (Three.js) — на базе Magic 21st.dev inspiration =====
+    (function () {
+      if (!window.THREE) return;
+      const canvas = document.getElementById('scene');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+      camera.position.z = 4.2;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+      const noiseGLSL = `
+        vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+        float snoise(vec3 v){
+          const vec2 C=vec2(1.0/6.0,1.0/3.0);const vec4 D=vec4(0.0,0.5,1.0,2.0);
+          vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);
+          vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.0-g;vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+          vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;i=mod289(i);
+          vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+          float n_=0.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+          vec4 j=p-49.0*floor(p*ns.z*ns.z);vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.0*x_);
+          vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.0-abs(x)-abs(y);
+          vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+          vec4 s0=floor(b0)*2.0+1.0;vec4 s1=floor(b1)*2.0+1.0;vec4 sh=-step(h,vec4(0.0));
+          vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+          vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+          vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+          p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+          vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);m=m*m;
+          return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+        }`;
+
+      const mat = new THREE.ShaderMaterial({
+        wireframe: true, transparent: true,
+        uniforms: { time: { value: 0 }, amp: { value: 0.35 },
+          uColor: { value: new THREE.Color('#e60023') }, uColor2: { value: new THREE.Color('#ffd0d8') } },
+        vertexShader: noiseGLSL + `
+          uniform float time; uniform float amp; varying float vd;
+          void main(){
+            float n = snoise(position*1.3 + time*0.28);
+            vd = n;
+            vec3 p = position + normal * n * amp;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0);
+          }`,
+        fragmentShader: `
+          uniform vec3 uColor; uniform vec3 uColor2; varying float vd;
+          void main(){
+            vec3 col = mix(uColor, uColor2, smoothstep(-0.4,0.6,vd));
+            gl_FragColor = vec4(col, 0.55 + 0.45*smoothstep(-0.3,0.6,vd));
+          }`,
+      });
+      const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 24), mat);
+      scene.add(mesh);
+
+      // частицы
+      const N = 900, pos = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) { const r = 3 + Math.random() * 6, a = Math.random() * 6.28, b = Math.acos(2 * Math.random() - 1);
+        pos[i*3] = r*Math.sin(b)*Math.cos(a); pos[i*3+1] = r*Math.sin(b)*Math.sin(a); pos[i*3+2] = r*Math.cos(b); }
+      const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const particles = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#e60023', size: 0.025, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }));
+      scene.add(particles);
+
+      let mx = 0, my = 0, tx = 0, ty = 0;
+      addEventListener('mousemove', (e) => { tx = (e.clientX / innerWidth - 0.5); ty = (e.clientY / innerHeight - 0.5); });
+      addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+      const clock = new THREE.Clock();
+      (function loop() {
+        requestAnimationFrame(loop);
+        const t = clock.getElapsedTime();
+        mat.uniforms.time.value = reduce ? 0 : t;
+        mx += (tx - mx) * 0.05; my += (ty - my) * 0.05;
+        mesh.rotation.y = t * 0.12 + mx * 0.6; mesh.rotation.x = my * 0.5;
+        particles.rotation.y = t * 0.03;
+        camera.position.x = mx * 0.8; camera.position.y = -my * 0.8; camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+      })();
+    })();
+
+    // spotlight
+    const spot = document.getElementById('spot');
+    addEventListener('mousemove', (e) => { spot.style.opacity = '1'; spot.style.left = e.clientX + 'px'; spot.style.top = e.clientY + 'px'; });
+    // scroll progress
+    const bar = document.getElementById('bar');
+    addEventListener('scroll', () => { const h = document.documentElement.scrollHeight - innerHeight; bar.style.width = (scrollY / h * 100) + '%'; });
+    // reveal
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>
